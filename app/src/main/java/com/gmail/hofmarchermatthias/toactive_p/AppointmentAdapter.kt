@@ -20,12 +20,13 @@ class AppointmentAdapter(firestoreRecyclerOptions: FirestoreRecyclerOptions<Appo
     override fun onBindViewHolder(holder: AppointmentHolder, position: Int, model: Appointment) {
         holder.itemView.appointment_title.text = model.title
         holder.itemView.appointment_description.text = model.description
-        holder.itemView.appointment_start.text = model.timeStamp.toString()
+        holder.itemView.appointment_start.text = model.timestamp.toString()
     }
 
     override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): AppointmentHolder {
-        LayoutInflater.from(viewGroup.context).inflate(R.layout.item_appointment, viewGroup, false)
-        return AppointmentHolder(viewGroup)
+        val v =LayoutInflater.from(viewGroup.context)
+            .inflate(R.layout.item_appointment, viewGroup, false)
+        return AppointmentHolder(v)
     }
 
     fun deleteItem(position: Int){

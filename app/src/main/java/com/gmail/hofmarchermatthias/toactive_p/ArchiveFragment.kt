@@ -4,14 +4,21 @@ import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
+import android.support.v7.widget.helper.ItemTouchHelper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
+import android.widget.Toast
 import com.firebase.ui.firestore.FirestoreRecyclerOptions
 import com.gmail.hofmarchermatthias.toactive_p.model.Appointment
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
-
-
+import com.google.firebase.firestore.Query
+import kotlinx.android.synthetic.main.fragment_archive.*
 
 
 // TODO: Rename parameter arguments, choose names that match
@@ -29,7 +36,7 @@ private const val ARG_PARAM2 = "param2"
  *
  */
 class ArchiveFragment : Fragment() {
-    //region badFields
+    //region params
     /**
      * Ignore these Params
      */
@@ -37,11 +44,29 @@ class ArchiveFragment : Fragment() {
     private var param2: String? = null
     private var listener: OnFragmentInteractionListener? = null
 
-    //endregion badFiels
-
+    companion object {
+        /**
+         * Use this factory method to create a new instance of
+         * this fragment using the provided parameters.
+         *
+         * @param param1 Parameter 1.
+         * @param param2 Parameter 2.
+         * @return A new instance of fragment ArchiveFragment.
+         */
+        // TODO: Rename and change types and number of parameters
+        @JvmStatic
+        fun newInstance(param1: String, param2: String) =
+            ArchiveFragment().apply {
+                arguments = Bundle().apply {
+                    putString(ARG_PARAM1, param1)
+                    putString(ARG_PARAM2, param2)
+                }
+            }
+    }
+    //endregion params
     //region database
     private val db = FirebaseFirestore.getInstance()
-    private val notebookRef = db.collection("Notebook")
+    private val notebookRef = db.collection("Users")
         .document("TestUser")
         .collection("Data")
     //endregion database
@@ -64,22 +89,20 @@ class ArchiveFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_archive, container, false)
     }
 
-    override fun onStart() {
-        super.onStart()
-
-
-        val query = FirebaseFirestore.getInstance()
-            .collection("test")
-            .orderBy("timestamp")
-            .limit(50)
-
-        var firestoreRecyclerOptions = FirestoreRecyclerOptions.Builder<Appointment>().
-            setQuery(query, Appointment::class.java)
-            .build()
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        setUpRecyclerView()
     }
 
+    override fun onStart() {
+        super.onStart()
+        appointmentAdapter.startListening()
+    }
 
-
+    override fun onStop() {
+        super.onStop()
+        appointmentAdapter.stopListening()
+    }
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -111,23 +134,39 @@ class ArchiveFragment : Fragment() {
         fun onFragmentInteraction(uri: Uri)
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment ArchiveFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            ArchiveFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
+
+
+    fun setUpRecyclerView(){
+        val query = notebookRef.orderBy("timestamp", Query.Direction.ASCENDING)
+        val options = FirestoreRecyclerOptions.Builder<Appointment>()
+            .setQuery(query, Appointment::class.java)
+            .build()
+
+        appointmentAdapter = AppointmentAdapter(options)
+        recycler_view.setHasFixedSize(true)
+        recycler_view.layoutManager = LinearLayoutManager(this.context)
+        recycler_view.adapter = appointmentAdapter
+
+        ItemTouchHelper(object: ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT){
+            override fun onMove(p0: RecyclerView, p1: RecyclerView.ViewHolder, p2: RecyclerView.ViewHolder): Boolean {
+                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
             }
+
+            override fun onSwiped(p0: RecyclerView.ViewHolder, p1: Int) {
+                appointmentAdapter.deleteItem(p0.adapterPosition)
+            }
+        }).attachToRecyclerView(recycler_view)
+
+        appointmentAdapter.onItemClickListener=(object : AppointmentAdapter.OnItemClickListener{
+            override fun onItemClick(documentSnapshot: DocumentSnapshot, position: Int) {
+                val note = documentSnapshot.toObject(Appointment::class.java)
+                val id = documentSnapshot.id
+                val path = documentSnapshot.reference.path
+
+                Toast.makeText(this@ArchiveFragment.context, "Position: "+position+" ID: "+id, Toast.LENGTH_LONG)
+                    .show()
+            }
+
+        })
     }
 }

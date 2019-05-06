@@ -1,5 +1,6 @@
 package com.gmail.hofmarchermatthias.toactive_p
 
+import android.net.Uri
 import android.os.Bundle
 import android.support.design.widget.NavigationView
 import android.support.design.widget.Snackbar
@@ -12,7 +13,12 @@ import android.view.MenuItem
 import kotlinx.android.synthetic.main.app_bar_main.*
 import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
+class MainActivity : AppCompatActivity(),
+    NavigationView.OnNavigationItemSelectedListener,
+    ArchiveFragment.OnFragmentInteractionListener {
+    override fun onFragmentInteraction(uri: Uri) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,6 +70,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 // Handle the camera action
             }
             R.id.nav_gallery -> {
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, ArchiveFragment()).commit()
 
             }
             R.id.nav_slideshow -> {
