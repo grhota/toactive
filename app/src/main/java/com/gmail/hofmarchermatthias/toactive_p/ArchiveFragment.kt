@@ -1,17 +1,16 @@
 package com.gmail.hofmarchermatthias.toactive_p
 
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.helper.ItemTouchHelper
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
 import android.widget.Toast
 import com.firebase.ui.firestore.FirestoreRecyclerOptions
 import com.gmail.hofmarchermatthias.toactive_p.model.Appointment
@@ -19,6 +18,9 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.android.synthetic.main.fragment_archive.*
+import android.support.v7.widget.DividerItemDecoration
+import com.google.firebase.Timestamp
+import java.util.*
 
 
 // TODO: Rename parameter arguments, choose names that match
@@ -136,16 +138,26 @@ class ArchiveFragment : Fragment() {
 
 
 
-    fun setUpRecyclerView(){
-        val query = notebookRef.orderBy("timestamp", Query.Direction.ASCENDING)
+    private fun setUpRecyclerView(){
+        val query = notebookRef
+            .orderBy("timestamp", Query.Direction.ASCENDING)
+
         val options = FirestoreRecyclerOptions.Builder<Appointment>()
             .setQuery(query, Appointment::class.java)
             .build()
 
         appointmentAdapter = AppointmentAdapter(options)
         recycler_view.setHasFixedSize(true)
-        recycler_view.layoutManager = LinearLayoutManager(this.context)
         recycler_view.adapter = appointmentAdapter
+
+        val linearLayoutManager = LinearLayoutManager(this.context)
+
+        val dividerItemDecoration = DividerItemDecoration(
+            recycler_view.context,
+            linearLayoutManager.orientation
+        )
+        recycler_view.layoutManager = linearLayoutManager
+        recycler_view.addItemDecoration(dividerItemDecoration)
 
         ItemTouchHelper(object: ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT){
             override fun onMove(p0: RecyclerView, p1: RecyclerView.ViewHolder, p2: RecyclerView.ViewHolder): Boolean {
@@ -159,14 +171,19 @@ class ArchiveFragment : Fragment() {
 
         appointmentAdapter.onItemClickListener=(object : AppointmentAdapter.OnItemClickListener{
             override fun onItemClick(documentSnapshot: DocumentSnapshot, position: Int) {
-                val note = documentSnapshot.toObject(Appointment::class.java)
                 val id = documentSnapshot.id
                 val path = documentSnapshot.reference.path
 
                 Toast.makeText(this@ArchiveFragment.context, "Position: "+position+" ID: "+id, Toast.LENGTH_LONG)
                     .show()
-            }
 
+                val bundle = Bundle()
+                bundle.putString("path", path)
+                bundle.putString("id", id)
+                val intent = Intent(context, AppointmentSample::class.java)
+                intent.putExtras(bundle)
+                startActivity(intent)
+            }
         })
     }
 }
